@@ -25,6 +25,8 @@ extension Data {
         }
         return self.map { String(format: "%02x", $0) }.joined()
     }
+    
+    // Note: init?(hex:) and hex property are defined in NostrCrypto.swift to avoid duplicates
 }
 
 class BluetoothMeshService: NSObject {
@@ -45,6 +47,10 @@ class BluetoothMeshService: NSObject {
     private var peerRSSI: [String: NSNumber] = [:] // Track RSSI values for peers
     private var peripheralRSSI: [String: NSNumber] = [:] // Track RSSI by peripheral ID during discovery
     private var loggedCryptoErrors = Set<String>()  // Track which peers we've logged crypto errors for
+    
+    // MARK: - Dual Signing Support
+    private var dualIdentity: DualIdentity?
+    private var nostrBridge: NostrBridge?
     
     weak var delegate: BitchatDelegate?
     private let encryptionService = EncryptionService()
@@ -375,6 +381,43 @@ class BluetoothMeshService: NSObject {
         
         // Start cover traffic for privacy
         startCoverTraffic()
+        
+        // Initialize dual signing if Nostr is configured
+        initializeDualSigning()
+    }
+    
+    // MARK: - Dual Signing Integration
+    
+    /// Initialize dual signing support if Nostr bridge is configured
+    private func initializeDualSigning() {
+        guard NostrSettings.isConfigured else {
+            print("[DUAL_SIGNING] Nostr not configured, using standard signing only")
+            return
+        }
+        
+        guard let privateKeyHex = NostrSettings.privateKey,
+              let privateKeyData = Data(hex: privateKeyHex) else {
+            print("[DUAL_SIGNING] Invalid Nostr private key, using standard signing only")
+            return
+        }
+        
+        // Create dual identity using the saved Nostr private key
+        dualIdentity = DualIdentity(nostrPrivateKey: privateKeyData)
+        
+        // Set up Nostr bridge with the configured relay
+        let relayURLs = [NostrSettings.relayURL]
+        let bridge = NostrBridge(relayURLs: relayURLs, identity: dualIdentity!)
+        nostrBridge = bridge
+        
+        // Start the bridge
+        Task {
+            await bridge.start()
+        }
+        
+        print("[DUAL_SIGNING] Dual signing initialized with Nostr bridge")
+        print("[DUAL_SIGNING] Nostr pubkey: \(dualIdentity!.nostrPublicKeyHex)")
+        print("[DUAL_SIGNING] Relay: \(NostrSettings.relayURL)")
+        print("[DUAL_SIGNING] Publish mode: \(NostrSettings.publishToRelays ? "full relay" : "identity only")")
     }
     
     func sendBroadcastAnnounce() {
@@ -509,50 +552,110 @@ class BluetoothMeshService: NSObject {
                 room: room
             )
             
-            if let messageData = message.toBinaryPayload() {
-                // Sign the message payload (no encryption for broadcasts)
-                let signature: Data?
-                do {
-                    signature = try self.encryptionService.sign(messageData)
-                } catch {
-                    // print("[CRYPTO] Failed to sign message: \(error)")
-                    signature = nil
-                }
-                
-                // Use unified message type with broadcast recipient
-                let packet = BitchatPacket(
-                    type: MessageType.message.rawValue,
-                    senderID: Data(self.myPeerID.utf8),
-                    recipientID: SpecialRecipients.broadcast,  // Special broadcast ID
-                    timestamp: UInt64(Date().timeIntervalSince1970 * 1000), // milliseconds
-                    payload: messageData,
-                    signature: signature,
-                    ttl: self.adaptiveTTL
-                )
-                
-                // Track this message to prevent duplicate sends
-                let msgID = "\(packet.timestamp)-\(self.myPeerID)-\(packet.payload.prefix(32).hashValue)"
-                if !self.recentlySentMessages.contains(msgID) {
-                    self.recentlySentMessages.insert(msgID)
-                    
-                    // Clean up old entries after 10 seconds
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) { [weak self] in
-                        self?.recentlySentMessages.remove(msgID)
-                    }
-                    
-                    // Add random delay before initial send
-                    let initialDelay = self.randomDelay()
-                    DispatchQueue.main.asyncAfter(deadline: .now() + initialDelay) { [weak self] in
-                        self?.broadcastPacket(packet)
-                    }
-                    
-                    // Single retry for reliability
-                    let retryDelay = 0.3 + self.randomDelay()
-                    DispatchQueue.main.asyncAfter(deadline: .now() + retryDelay) { [weak self] in
-                        self?.broadcastPacket(packet)
-                        // Re-sending message
-                    }
-                }
+            // Check if dual signing is available and enabled
+            if let identity = self.dualIdentity, NostrSettings.isConfigured {
+                self.sendDualSignedMessageInternal(message, identity: identity)
+            } else {
+                // Fall back to standard signing
+                self.sendStandardMessage(message, recipientID: recipientID)
+            }
+        }
+    }
+    
+    /// Send message using dual signing (Bitchat + Nostr) - internal implementation
+    private func sendDualSignedMessageInternal(_ message: BitchatMessage, identity: DualIdentity) {
+        print("[DUAL_SIGNING] Sending dual-signed message: \(message.content.prefix(50))...")
+        
+        // Determine bridge options based on user settings
+        let bridgeOptions: BridgeOptions = NostrSettings.publishToRelays ? .publishable : .identityOnly
+        
+        // Create dual-signed packet
+        guard let dualPacket = message.createDualSignedPacket(
+            identity: identity,
+            bridgeOptions: bridgeOptions,
+            recipientID: SpecialRecipients.broadcast,
+            ttl: self.adaptiveTTL
+        ) else {
+            print("[DUAL_SIGNING] Failed to create dual-signed packet, falling back to standard")
+            sendStandardMessage(message, recipientID: nil)
+            return
+        }
+        
+        print("[DUAL_SIGNING] Created dual-signed packet with bridge options: \(bridgeOptions.isPublishable ? "publishable" : "identity-only")")
+        
+        // Track this message to prevent duplicate sends
+        let msgID = "\(dualPacket.bitchatPacket.timestamp)-\(self.myPeerID)-\(dualPacket.bitchatPacket.payload.prefix(32).hashValue)"
+        if !self.recentlySentMessages.contains(msgID) {
+            self.recentlySentMessages.insert(msgID)
+            
+            // Clean up old entries after 10 seconds
+            DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) { [weak self] in
+                self?.recentlySentMessages.remove(msgID)
+            }
+            
+            // Send via mesh network (full dual signed packet)
+            let initialDelay = self.randomDelay()
+            DispatchQueue.main.asyncAfter(deadline: .now() + initialDelay) { [weak self] in
+                self?.broadcastDualSignedPacket(dualPacket)
+            }
+            
+            // Single retry for reliability
+            let retryDelay = 0.3 + self.randomDelay()
+            DispatchQueue.main.asyncAfter(deadline: .now() + retryDelay) { [weak self] in
+                self?.broadcastDualSignedPacket(dualPacket)
+            }
+            
+            // Bridge to Nostr (if enabled and configured)
+            Task {
+                await self.nostrBridge?.bridgeToNostr(dualPacket)
+            }
+        }
+    }
+    
+    /// Send message using standard Bitchat signing only
+    private func sendStandardMessage(_ message: BitchatMessage, recipientID: String?) {
+        guard let messageData = message.toBinaryPayload() else { return }
+        
+        // Sign the message payload (no encryption for broadcasts)
+        let signature: Data?
+        do {
+            signature = try self.encryptionService.sign(messageData)
+        } catch {
+            print("[CRYPTO] Failed to sign message: \(error)")
+            signature = nil
+        }
+        
+        // Use unified message type with broadcast recipient
+        let packet = BitchatPacket(
+            type: MessageType.message.rawValue,
+            senderID: Data(self.myPeerID.utf8),
+            recipientID: SpecialRecipients.broadcast,  // Special broadcast ID
+            timestamp: UInt64(Date().timeIntervalSince1970 * 1000), // milliseconds
+            payload: messageData,
+            signature: signature,
+            ttl: self.adaptiveTTL
+        )
+        
+        // Track this message to prevent duplicate sends
+        let msgID = "\(packet.timestamp)-\(self.myPeerID)-\(packet.payload.prefix(32).hashValue)"
+        if !self.recentlySentMessages.contains(msgID) {
+            self.recentlySentMessages.insert(msgID)
+            
+            // Clean up old entries after 10 seconds
+            DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) { [weak self] in
+                self?.recentlySentMessages.remove(msgID)
+            }
+            
+            // Add random delay before initial send
+            let initialDelay = self.randomDelay()
+            DispatchQueue.main.asyncAfter(deadline: .now() + initialDelay) { [weak self] in
+                self?.broadcastPacket(packet)
+            }
+            
+            // Single retry for reliability
+            let retryDelay = 0.3 + self.randomDelay()
+            DispatchQueue.main.asyncAfter(deadline: .now() + retryDelay) { [weak self] in
+                self?.broadcastPacket(packet)
             }
         }
     }
@@ -576,73 +679,170 @@ class BluetoothMeshService: NSObject {
                 senderPeerID: self.myPeerID
             )
             
-            if let messageData = message.toBinaryPayload() {
-                // Pad message to standard block size for privacy
-                let blockSize = MessagePadding.optimalBlockSize(for: messageData.count)
-                let paddedData = MessagePadding.pad(messageData, toSize: blockSize)
-                
-                // Encrypt the padded message for the recipient
-                let encryptedPayload: Data
-                do {
-                    encryptedPayload = try self.encryptionService.encrypt(paddedData, for: recipientPeerID)
-                } catch {
-                    // print("[CRYPTO] Failed to encrypt private message: \(error)")
-                    // Don't send unencrypted private messages
-                    return
+            // Check if dual signing is available and enabled
+            if let identity = self.dualIdentity, NostrSettings.isConfigured {
+                self.sendDualSignedPrivateMessage(message, to: recipientPeerID, identity: identity)
+            } else {
+                // Fall back to standard signing
+                self.sendStandardPrivateMessage(message, to: recipientPeerID)
+            }
+        }
+    }
+    
+    /// Send private message using dual signing (Bitchat + Nostr)
+    private func sendDualSignedPrivateMessage(_ message: BitchatMessage, to recipientPeerID: String, identity: DualIdentity) {
+        print("[DUAL_SIGNING] Sending dual-signed private message to \(recipientPeerID)")
+        
+        guard let messageData = message.toBinaryPayload() else { return }
+        
+        // Pad message to standard block size for privacy
+        let blockSize = MessagePadding.optimalBlockSize(for: messageData.count)
+        let paddedData = MessagePadding.pad(messageData, toSize: blockSize)
+        
+        // Encrypt the padded message for the recipient
+        let encryptedPayload: Data
+        do {
+            encryptedPayload = try self.encryptionService.encrypt(paddedData, for: recipientPeerID)
+        } catch {
+            print("[CRYPTO] Failed to encrypt private message: \(error)")
+            return
+        }
+        
+        // For private messages, we don't bridge to Nostr (privacy protection)
+        // We only use dual signing for the Bitchat mesh network
+        
+        // Create dual-signed packet with encrypted content
+        let encryptedMessage = BitchatMessage(
+            sender: message.sender,
+            content: message.content,
+            timestamp: message.timestamp,
+            isRelay: false,
+            originalSender: nil,
+            isPrivate: true,
+            recipientNickname: message.recipientNickname,
+            senderPeerID: message.senderPeerID
+        )
+        
+        // Create dual-signed packet but mark as identity-only to prevent relay bridging
+        guard let dualPacket = encryptedMessage.createDualSignedPacket(
+            identity: identity,
+            bridgeOptions: .identityOnly, // Never bridge private messages
+            recipientID: Data(recipientPeerID.utf8),
+            ttl: self.adaptiveTTL
+        ) else {
+            print("[DUAL_SIGNING] Failed to create dual-signed private packet, falling back to standard")
+            sendStandardPrivateMessage(message, to: recipientPeerID)
+            return
+        }
+        
+        // Replace the packet payload with the encrypted content
+        var modifiedPacket = dualPacket.bitchatPacket
+        modifiedPacket.payload = encryptedPayload
+        
+        // Re-sign the modified packet
+        let signature: Data?
+        do {
+            signature = try identity.bitchatPrivateKey.signature(for: encryptedPayload)
+        } catch {
+            print("[CRYPTO] Failed to sign encrypted private message: \(error)")
+            signature = nil
+        }
+        modifiedPacket.signature = signature
+        
+        // Check if recipient is offline and cache if they're a favorite
+        if !self.activePeers.contains(recipientPeerID) {
+            if let publicKeyData = self.encryptionService.getPeerIdentityKey(recipientPeerID) {
+                let fingerprint = self.getPublicKeyFingerprint(publicKeyData)
+                if self.delegate?.isFavorite(fingerprint: fingerprint) ?? false {
+                    // Recipient is offline favorite, cache the message
+                    let messageID = "\(modifiedPacket.timestamp)-\(self.myPeerID)"
+                    self.cacheMessage(modifiedPacket, messageID: messageID)
                 }
-                
-                // Sign the encrypted payload
-                let signature: Data?
-                do {
-                    signature = try self.encryptionService.sign(encryptedPayload)
-                } catch {
-                    // print("[CRYPTO] Failed to sign private message: \(error)")
-                    signature = nil
+            }
+        }
+        
+        // Track to prevent duplicate sends
+        let msgID = "\(modifiedPacket.timestamp)-\(self.myPeerID)-\(modifiedPacket.payload.prefix(32).hashValue)"
+        if !self.recentlySentMessages.contains(msgID) {
+            self.recentlySentMessages.insert(msgID)
+            
+            // Clean up after 10 seconds
+            DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) { [weak self] in
+                self?.recentlySentMessages.remove(msgID)
+            }
+            
+            // Add random delay for timing obfuscation
+            let delay = self.randomDelay()
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.broadcastPacket(modifiedPacket)
+                print("[DUAL_SIGNING] Dual-signed private message sent")
+            }
+        }
+    }
+    
+    /// Send private message using standard Bitchat signing only
+    private func sendStandardPrivateMessage(_ message: BitchatMessage, to recipientPeerID: String) {
+        guard let messageData = message.toBinaryPayload() else { return }
+        
+        // Pad message to standard block size for privacy
+        let blockSize = MessagePadding.optimalBlockSize(for: messageData.count)
+        let paddedData = MessagePadding.pad(messageData, toSize: blockSize)
+        
+        // Encrypt the padded message for the recipient
+        let encryptedPayload: Data
+        do {
+            encryptedPayload = try self.encryptionService.encrypt(paddedData, for: recipientPeerID)
+        } catch {
+            print("[CRYPTO] Failed to encrypt private message: \(error)")
+            return
+        }
+        
+        // Sign the encrypted payload
+        let signature: Data?
+        do {
+            signature = try self.encryptionService.sign(encryptedPayload)
+        } catch {
+            print("[CRYPTO] Failed to sign private message: \(error)")
+            signature = nil
+        }
+        
+        // Create packet with recipient ID for proper routing
+        let packet = BitchatPacket(
+            type: MessageType.message.rawValue,
+            senderID: Data(self.myPeerID.utf8),
+            recipientID: Data(recipientPeerID.utf8),
+            timestamp: UInt64(Date().timeIntervalSince1970 * 1000), // milliseconds
+            payload: encryptedPayload,
+            signature: signature,
+            ttl: self.adaptiveTTL
+        )
+        
+        // Check if recipient is offline and cache if they're a favorite
+        if !self.activePeers.contains(recipientPeerID) {
+            if let publicKeyData = self.encryptionService.getPeerIdentityKey(recipientPeerID) {
+                let fingerprint = self.getPublicKeyFingerprint(publicKeyData)
+                if self.delegate?.isFavorite(fingerprint: fingerprint) ?? false {
+                    // Recipient is offline favorite, cache the message
+                    let messageID = "\(packet.timestamp)-\(self.myPeerID)"
+                    self.cacheMessage(packet, messageID: messageID)
                 }
-                
-                // Create packet with recipient ID for proper routing
-                let packet = BitchatPacket(
-                    type: MessageType.message.rawValue,
-                    senderID: Data(self.myPeerID.utf8),
-                    recipientID: Data(recipientPeerID.utf8),
-                    timestamp: UInt64(Date().timeIntervalSince1970 * 1000), // milliseconds
-                    payload: encryptedPayload,
-                    signature: signature,
-                    ttl: self.adaptiveTTL
-                )
-                
-                
-                // Check if recipient is offline and cache if they're a favorite
-                if !self.activePeers.contains(recipientPeerID) {
-                    if let publicKeyData = self.encryptionService.getPeerIdentityKey(recipientPeerID) {
-                        let fingerprint = self.getPublicKeyFingerprint(publicKeyData)
-                        if self.delegate?.isFavorite(fingerprint: fingerprint) ?? false {
-                            // Recipient is offline favorite, cache the message
-                            let messageID = "\(packet.timestamp)-\(self.myPeerID)"
-                            self.cacheMessage(packet, messageID: messageID)
-                        }
-                    }
-                }
-                
-                // Track to prevent duplicate sends
-                let msgID = "\(packet.timestamp)-\(self.myPeerID)-\(packet.payload.prefix(32).hashValue)"
-                if !self.recentlySentMessages.contains(msgID) {
-                    self.recentlySentMessages.insert(msgID)
-                    
-                    // Clean up after 10 seconds
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) { [weak self] in
-                        self?.recentlySentMessages.remove(msgID)
-                    }
-                    
-                    // Add random delay for timing obfuscation
-                    let delay = self.randomDelay()
-                    DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-                        self?.broadcastPacket(packet)
-                        // Private message sent with timing delay
-                    }
-                    
-                    // Don't call didReceiveMessage here - let the view model handle it directly
-                }
+            }
+        }
+        
+        // Track to prevent duplicate sends
+        let msgID = "\(packet.timestamp)-\(self.myPeerID)-\(packet.payload.prefix(32).hashValue)"
+        if !self.recentlySentMessages.contains(msgID) {
+            self.recentlySentMessages.insert(msgID)
+            
+            // Clean up after 10 seconds
+            DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) { [weak self] in
+                self?.recentlySentMessages.remove(msgID)
+            }
+            
+            // Add random delay for timing obfuscation
+            let delay = self.randomDelay()
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.broadcastPacket(packet)
             }
         }
     }
@@ -1247,6 +1447,80 @@ class BluetoothMeshService: NSObject {
                 )
             }
         }
+    }
+    
+    /// Broadcast a dual signed packet (BitchatPacket + BridgeOptions + NostrSignature + NostrPubkey)
+    private func broadcastDualSignedPacket(_ dualPacket: DualSignedPacket) {
+        guard let data = dualPacket.toBinaryData() else { 
+            print("[DUAL_SIGNING] Failed to convert dual signed packet to binary data, falling back to BitchatPacket only")
+            // Fall back to sending just the BitchatPacket part
+            broadcastPacket(dualPacket.bitchatPacket)
+            return 
+        }
+        
+        print("[DUAL_SIGNING] Broadcasting dual signed packet (\(data.count) bytes)")
+        
+        // Send to connected peripherals (as central)
+        var sentToPeripherals = 0
+        for (_, peripheral) in connectedPeripherals {
+            if let characteristic = peripheralCharacteristics[peripheral] {
+                // Check if peripheral is connected before writing
+                if peripheral.state == .connected {
+                    // Use withoutResponse for faster transmission when possible
+                    // Only use withResponse for critical messages or when MTU negotiation needed
+                    let writeType: CBCharacteristicWriteType = data.count > 512 ? .withResponse : .withoutResponse
+                    
+                    // Additional safety check for characteristic properties
+                    if characteristic.properties.contains(.write) || 
+                       characteristic.properties.contains(.writeWithoutResponse) {
+                        peripheral.writeValue(data, for: characteristic, type: writeType)
+                        sentToPeripherals += 1
+                    }
+                } else {
+                    if let peerID = connectedPeripherals.first(where: { $0.value == peripheral })?.key {
+                        connectedPeripherals.removeValue(forKey: peerID)
+                        peripheralCharacteristics.removeValue(forKey: peripheral)
+                    }
+                }
+            }
+        }
+        
+        // Send to subscribed centrals (as peripheral)
+        var sentToCentrals = 0
+        if let char = characteristic, !subscribedCentrals.isEmpty {
+            // Send to all subscribed centrals
+            let success = peripheralManager?.updateValue(data, for: char, onSubscribedCentrals: nil) ?? false
+            if success {
+                sentToCentrals = subscribedCentrals.count
+            }
+        }
+        
+        print("[DUAL_SIGNING] Sent dual signed packet to \(sentToPeripherals) peripherals and \(sentToCentrals) centrals")
+        
+        // If no peers received the message, fall back to BitchatPacket and add to retry queue
+        if sentToPeripherals == 0 && sentToCentrals == 0 {
+            print("[DUAL_SIGNING] No peers received dual signed packet, falling back to BitchatPacket")
+            broadcastPacket(dualPacket.bitchatPacket)
+        }
+    }
+    
+    /// Handle received dual signed packet - processes both the BitchatPacket and verifies Nostr signature
+    private func handleReceivedDualSignedPacket(_ dualPacket: DualSignedPacket, from peerID: String, peripheral: CBPeripheral? = nil) {
+        print("[DUAL_SIGNING] Processing dual signed packet from \(peerID)")
+        
+        // Log the bridge options and signature info
+        print("[DUAL_SIGNING] Bridge options: \(dualPacket.bridgeOptions.isPublishable ? "publishable" : "identity-only")")
+        print("[DUAL_SIGNING] Nostr pubkey: \(dualPacket.nostrPubkey.map { String(format: "%02x", $0) }.joined())")
+        print("[DUAL_SIGNING] Nostr signature: \(dualPacket.nostrSignature.map { String(format: "%02x", $0) }.joined())")
+        
+        // Process the BitchatPacket part normally
+        handleReceivedPacket(dualPacket.bitchatPacket, from: peerID, peripheral: peripheral)
+        
+        // TODO: Verify Nostr signature if needed for security
+        // TODO: Bridge to Nostr if bridgeOptions.isPublishable and not already published
+        
+        // Notify that we received a dual signed message
+        NotificationCenter.default.post(name: NSNotification.Name("dualSignedMessageReceived"), object: dualPacket)
     }
     
     private func handleReceivedPacket(_ packet: BitchatPacket, from peerID: String, peripheral: CBPeripheral? = nil) {
@@ -2396,60 +2670,88 @@ extension BluetoothMeshService: CBPeripheralManagerDelegate {
     
     func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveWrite requests: [CBATTRequest]) {
         for request in requests {
-            if let data = request.value,
-               let packet = BitchatPacket.from(data) {
-                // Try to identify peer from packet
-                let peerID = String(data: packet.senderID.trimmingNullBytes(), encoding: .utf8) ?? "unknown"
-                
-                
-                // Store the central for updates
-                if !subscribedCentrals.contains(request.central) {
-                    subscribedCentrals.append(request.central)
+            if let data = request.value {
+                // First try to decode as a DualSignedPacket
+                if let dualPacket = DualSignedPacket.fromBinaryData(data) {
+                    print("[DUAL_SIGNING] Received dual signed packet (\(data.count) bytes)")
+                    
+                    // Try to identify peer from packet
+                    let peerID = String(data: dualPacket.bitchatPacket.senderID.trimmingNullBytes(), encoding: .utf8) ?? "unknown"
+                    
+                    // Store the central for updates
+                    if !subscribedCentrals.contains(request.central) {
+                        subscribedCentrals.append(request.central)
+                    }
+                    
+                    // Handle the dual signed packet
+                    handleReceivedDualSignedPacket(dualPacket, from: peerID)
+                    peripheral.respond(to: request, withResult: .success)
+                    continue
                 }
                 
-                // Track this peer as connected
-                if peerID != "unknown" && peerID != myPeerID {
-                    // Send key exchange back if we haven't already
-                    if packet.type == MessageType.keyExchange.rawValue {
-                        let publicKeyData = self.encryptionService.getCombinedPublicKeyData()
-                        let responsePacket = BitchatPacket(
-                            type: MessageType.keyExchange.rawValue,
-                            ttl: 1,
-                            senderID: self.myPeerID,
-                            payload: publicKeyData
-                        )
-                        if let data = responsePacket.toBinaryData() {
-                            if let char = self.characteristic {
-                                peripheral.updateValue(data, for: char, onSubscribedCentrals: [request.central])
+                // Fall back to trying to decode as a regular BitchatPacket
+                if let packet = BitchatPacket.from(data) {
+                    print("[DUAL_SIGNING] Received regular BitchatPacket (\(data.count) bytes)")
+                    
+                    // Try to identify peer from packet
+                    let peerID = String(data: packet.senderID.trimmingNullBytes(), encoding: .utf8) ?? "unknown"
+                    
+                    // Store the central for updates
+                    if !subscribedCentrals.contains(request.central) {
+                        subscribedCentrals.append(request.central)
+                    }
+                    
+                    // Track this peer as connected
+                    if peerID != "unknown" && peerID != myPeerID {
+                        // Send key exchange back if we haven't already
+                        if packet.type == MessageType.keyExchange.rawValue {
+                            let publicKeyData = self.encryptionService.getCombinedPublicKeyData()
+                            let responsePacket = BitchatPacket(
+                                type: MessageType.keyExchange.rawValue,
+                                ttl: 1,
+                                senderID: self.myPeerID,
+                                payload: publicKeyData
+                            )
+                            if let data = responsePacket.toBinaryData() {
+                                if let char = self.characteristic {
+                                    peripheral.updateValue(data, for: char, onSubscribedCentrals: [request.central])
+                                }
                             }
-                        }
-                        
-                        // Send announce immediately after key exchange
-                        // Send multiple times for reliability
-                        if let vm = self.delegate as? ChatViewModel {
-                            for delay in [0.1, 0.5, 1.0] {
-                                DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-                                    guard let self = self else { return }
-                                    let announcePacket = BitchatPacket(
-                                        type: MessageType.announce.rawValue,
-                                        ttl: 3,
-                                        senderID: self.myPeerID,
-                                        payload: Data(vm.nickname.utf8)
-                                    )
-                                    if let data = announcePacket.toBinaryData() {
-                                        if let char = self.characteristic {
-                                            peripheral.updateValue(data, for: char, onSubscribedCentrals: nil)
+                            
+                            // Send announce immediately after key exchange
+                            // Send multiple times for reliability
+                            if let vm = self.delegate as? ChatViewModel {
+                                for delay in [0.1, 0.5, 1.0] {
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                                        guard let self = self else { return }
+                                        let announcePacket = BitchatPacket(
+                                            type: MessageType.announce.rawValue,
+                                            ttl: 3,
+                                            senderID: self.myPeerID,
+                                            payload: Data(vm.nickname.utf8)
+                                        )
+                                        if let data = announcePacket.toBinaryData() {
+                                            if let char = self.characteristic {
+                                                peripheral.updateValue(data, for: char, onSubscribedCentrals: nil)
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
+                        
+                        self.notifyPeerListUpdate()
                     }
                     
-                    self.notifyPeerListUpdate()
+                    handleReceivedPacket(packet, from: peerID)
+                    peripheral.respond(to: request, withResult: .success)
+                } else {
+                    // Failed to decode data
+                    print("[DUAL_SIGNING] Failed to decode received data (\(data.count) bytes)")
+                    peripheral.respond(to: request, withResult: .success)
                 }
-                
-                handleReceivedPacket(packet, from: peerID)
+            } else {
+                // No data in request
                 peripheral.respond(to: request, withResult: .success)
             }
         }

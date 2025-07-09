@@ -165,6 +165,12 @@ struct ContentView: View {
         #if os(macOS)
         .frame(minWidth: 600, minHeight: 400)
         #endif
+        .onAppear {
+            // Check for user's own Nostr profile at startup - force fresh fetch
+            Task {
+                await NostrIdentityManager.shared.checkAndUpdateProfile(forceRefresh: true)
+            }
+        }
         .sheet(isPresented: $showAppInfo) {
             AppInfoView()
         }

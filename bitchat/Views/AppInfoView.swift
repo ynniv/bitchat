@@ -3,6 +3,7 @@ import SwiftUI
 struct AppInfoView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.colorScheme) var colorScheme
+    @State private var showingNostrSettings = false
     
     private var backgroundColor: Color {
         colorScheme == .dark ? Color.black : Color.white
@@ -48,7 +49,7 @@ struct AppInfoView: View {
                     
                     // Features
                     VStack(alignment: .leading, spacing: 16) {
-                        SectionHeader("Features")
+                        AppInfoSectionHeader("Features")
                         
                         FeatureRow(icon: "wifi.slash", title: "Offline Communication",
                                   description: "Works without internet using Bluetooth mesh networking")
@@ -74,7 +75,7 @@ struct AppInfoView: View {
                     
                     // Privacy
                     VStack(alignment: .leading, spacing: 16) {
-                        SectionHeader("Privacy")
+                        AppInfoSectionHeader("Privacy")
                         
                         FeatureRow(icon: "eye.slash", title: "No Tracking",
                                   description: "No servers, accounts, or data collection")
@@ -86,9 +87,45 @@ struct AppInfoView: View {
                                   description: "Triple-tap logo to instantly clear all data")
                     }
                     
+                    // Nostr Identity
+                    VStack(alignment: .leading, spacing: 16) {
+                        AppInfoSectionHeader("Nostr Identity")
+                        
+                        HStack(alignment: .top, spacing: 12) {
+                            Image(systemName: "person.badge.key")
+                                .font(.system(size: 20))
+                                .foregroundColor(textColor)
+                                .frame(width: 30)
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Bridge to Nostr")
+                                    .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                                    .foregroundColor(textColor)
+                                
+                                Text("Optionally publish messages to Nostr relays with dual signatures")
+                                    .font(.system(size: 12, design: .monospaced))
+                                    .foregroundColor(secondaryTextColor)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                
+                                Button(action: {
+                                    showingNostrSettings = true
+                                }) {
+                                    Text("configure")
+                                        .font(.system(size: 12, design: .monospaced))
+                                        .foregroundColor(textColor)
+                                        .underline()
+                                }
+                                .buttonStyle(.plain)
+                                .padding(.top, 4)
+                            }
+                            
+                            Spacer()
+                        }
+                    }
+                    
                     // How to Use
                     VStack(alignment: .leading, spacing: 16) {
-                        SectionHeader("How to Use")
+                        AppInfoSectionHeader("How to Use")
                         
                         VStack(alignment: .leading, spacing: 8) {
                             Text("• Set your nickname in the header")
@@ -104,7 +141,7 @@ struct AppInfoView: View {
                     
                     // Technical Details
                     VStack(alignment: .leading, spacing: 16) {
-                        SectionHeader("Technical Details")
+                        AppInfoSectionHeader("Technical Details")
                         
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Protocol: Custom binary over BLE")
@@ -135,6 +172,9 @@ struct AppInfoView: View {
             .background(backgroundColor)
         }
         .frame(width: 600, height: 700)
+        .sheet(isPresented: $showingNostrSettings) {
+            NostrSettingsView()
+        }
         #else
         NavigationView {
             ScrollView {
@@ -154,7 +194,7 @@ struct AppInfoView: View {
                     
                     // Features
                     VStack(alignment: .leading, spacing: 16) {
-                        SectionHeader("Features")
+                        AppInfoSectionHeader("Features")
                         
                         FeatureRow(icon: "wifi.slash", title: "Offline Communication",
                                   description: "Works without internet using Bluetooth mesh networking")
@@ -180,7 +220,7 @@ struct AppInfoView: View {
                     
                     // Privacy
                     VStack(alignment: .leading, spacing: 16) {
-                        SectionHeader("Privacy")
+                        AppInfoSectionHeader("Privacy")
                         
                         FeatureRow(icon: "eye.slash", title: "No Tracking",
                                   description: "No servers, accounts, or data collection")
@@ -192,9 +232,45 @@ struct AppInfoView: View {
                                   description: "Triple-tap logo to instantly clear all data")
                     }
                     
+                    // Nostr Identity
+                    VStack(alignment: .leading, spacing: 16) {
+                        AppInfoSectionHeader("Nostr Identity")
+                        
+                        HStack(alignment: .top, spacing: 12) {
+                            Image(systemName: "person.badge.key")
+                                .font(.system(size: 20))
+                                .foregroundColor(textColor)
+                                .frame(width: 30)
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Bridge to Nostr")
+                                    .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                                    .foregroundColor(textColor)
+                                
+                                Text("Optionally publish messages to Nostr relays with dual signatures")
+                                    .font(.system(size: 12, design: .monospaced))
+                                    .foregroundColor(secondaryTextColor)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                
+                                Button(action: {
+                                    showingNostrSettings = true
+                                }) {
+                                    Text("configure")
+                                        .font(.system(size: 12, design: .monospaced))
+                                        .foregroundColor(textColor)
+                                        .underline()
+                                }
+                                .buttonStyle(.plain)
+                                .padding(.top, 4)
+                            }
+                            
+                            Spacer()
+                        }
+                    }
+                    
                     // How to Use
                     VStack(alignment: .leading, spacing: 16) {
-                        SectionHeader("How to Use")
+                        AppInfoSectionHeader("How to Use")
                         
                         VStack(alignment: .leading, spacing: 8) {
                             Text("• Set your nickname in the header")
@@ -210,7 +286,7 @@ struct AppInfoView: View {
                     
                     // Technical Details
                     VStack(alignment: .leading, spacing: 16) {
-                        SectionHeader("Technical Details")
+                        AppInfoSectionHeader("Technical Details")
                         
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Protocol: Custom binary over BLE")
@@ -249,11 +325,15 @@ struct AppInfoView: View {
                 }
             }
         }
+        .sheet(isPresented: $showingNostrSettings) {
+            NostrSettingsView()
+        }
         #endif
     }
 }
 
-struct SectionHeader: View {
+// Note: AppInfoSectionHeader instead of SectionHeader to avoid conflicts with NostrSettingsView
+struct AppInfoSectionHeader: View {
     let title: String
     @Environment(\.colorScheme) var colorScheme
     

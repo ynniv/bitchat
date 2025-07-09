@@ -45,6 +45,36 @@
 		D450CF41F207BDE1A1AAA56E /* ChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6B8F7B7D55092C2540A7996 /* ChatViewModel.swift */; };
 		D948085736ED8E736C1DE3B0 /* BluetoothMeshService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5C3D880FF8AE1673B20E1E3 /* BluetoothMeshService.swift */; };
 		DDA1DFAB1FF7AADE52DC0F53 /* EncryptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DC1563390A15C042D059CF9 /* EncryptionService.swift */; };
+		E3BD91042E1B2DBB00049667 /* DualSigningProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BD91002E1B2DBB00049667 /* DualSigningProtocol.swift */; };
+		E3BD91052E1B2DBB00049667 /* NostrMapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BD91022E1B2DBB00049667 /* NostrMapping.swift */; };
+		E3BD91062E1B2DBB00049667 /* NostrBridgeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BD91012E1B2DBB00049667 /* NostrBridgeService.swift */; };
+		E3BD91072E1B2DBB00049667 /* DualSigningProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BD91002E1B2DBB00049667 /* DualSigningProtocol.swift */; };
+		E3BD91082E1B2DBB00049667 /* NostrMapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BD91022E1B2DBB00049667 /* NostrMapping.swift */; };
+		E3BD91092E1B2DBB00049667 /* NostrBridgeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BD91012E1B2DBB00049667 /* NostrBridgeService.swift */; };
+		E3BD910A2E1B2DBB00049667 /* DualSigningProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BD91002E1B2DBB00049667 /* DualSigningProtocol.swift */; };
+		E3BD910B2E1B2DBB00049667 /* NostrMapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BD91022E1B2DBB00049667 /* NostrMapping.swift */; };
+		E3BD910C2E1B2DBB00049667 /* NostrBridgeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BD91012E1B2DBB00049667 /* NostrBridgeService.swift */; };
+		E3BD910D2E1B2DBB00049667 /* DualSigningProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BD91002E1B2DBB00049667 /* DualSigningProtocol.swift */; };
+		E3BD910E2E1B2DBB00049667 /* NostrMapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BD91022E1B2DBB00049667 /* NostrMapping.swift */; };
+		E3BD910F2E1B2DBB00049667 /* NostrBridgeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BD91012E1B2DBB00049667 /* NostrBridgeService.swift */; };
+		E3BD91112E1B5C9700049667 /* NostrSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BD91102E1B5C9700049667 /* NostrSettings.swift */; };
+		E3BD91122E1B5C9700049667 /* NostrSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BD91102E1B5C9700049667 /* NostrSettings.swift */; };
+		E3BD91152E1BCC7B00049667 /* NostrProfileService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BD91142E1BCC7B00049667 /* NostrProfileService.swift */; };
+		E3BD91162E1BCC7B00049667 /* NostrCrypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BD91132E1BCC7B00049667 /* NostrCrypto.swift */; };
+		E3BD91172E1BCC7B00049667 /* NostrProfileService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BD91142E1BCC7B00049667 /* NostrProfileService.swift */; };
+		E3BD91182E1BCC7B00049667 /* NostrCrypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BD91132E1BCC7B00049667 /* NostrCrypto.swift */; };
+		E3BD91192E1BCC7B00049667 /* NostrProfileService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BD91142E1BCC7B00049667 /* NostrProfileService.swift */; };
+		E3BD911A2E1BCC7B00049667 /* NostrCrypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BD91132E1BCC7B00049667 /* NostrCrypto.swift */; };
+		E3BD911B2E1BCC7B00049667 /* NostrProfileService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BD91142E1BCC7B00049667 /* NostrProfileService.swift */; };
+		E3BD911C2E1BCC7B00049667 /* NostrCrypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BD91132E1BCC7B00049667 /* NostrCrypto.swift */; };
+		E3BD91202E1BCCA800049667 /* NostrSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BD911F2E1BCCA800049667 /* NostrSettingsView.swift */; };
+		E3BD91212E1BCCA800049667 /* NostrProfileMessageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BD911E2E1BCCA800049667 /* NostrProfileMessageView.swift */; };
+		E3BD91222E1BCCA800049667 /* NostrIdentityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BD911D2E1BCCA800049667 /* NostrIdentityView.swift */; };
+		E3BD91232E1BCCA800049667 /* NostrSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BD911F2E1BCCA800049667 /* NostrSettingsView.swift */; };
+		E3BD91242E1BCCA800049667 /* NostrProfileMessageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BD911E2E1BCCA800049667 /* NostrProfileMessageView.swift */; };
+		E3BD91252E1BCCA800049667 /* NostrIdentityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BD911D2E1BCCA800049667 /* NostrIdentityView.swift */; };
+		E3BD91272E1BCCD800049667 /* NostrIdentityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BD91262E1BCCD800049667 /* NostrIdentityManager.swift */; };
+		E3BD91282E1BCCD800049667 /* NostrIdentityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BD91262E1BCCD800049667 /* NostrIdentityManager.swift */; };
 		F00B713D5053617FB5F3F1BE /* MessagePaddingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DE9CDF66D4E52D268851048 /* MessagePaddingTests.swift */; };
 		F455F011B3B648ADA233F998 /* BinaryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2136C3E22D02D4A8DBE7EAB /* BinaryProtocol.swift */; };
 		F4A689F5F34125AE1BFD5599 /* PasswordProtectedRoomTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB12482E4AD78B861C538449 /* PasswordProtectedRoomTests.swift */; };
@@ -87,10 +117,20 @@
 		A08E03AA0C63E97C91749AEC /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A2136C3E22D02D4A8DBE7EAB /* BinaryProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryProtocol.swift; sourceTree = "<group>"; };
 		AA4D7595A613F7ED3B386132 /* MessageRetryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageRetryService.swift; sourceTree = "<group>"; };
-		C0DB1DE27F0AAB5092663E8E /* bitchatTests_iOS.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = bitchatTests_iOS.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C0DB1DE27F0AAB5092663E8E /* bitchatTests_iOS.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = bitchatTests_iOS.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CB043CA5EEB9AC8B07D61E97 /* OptimizedBloomFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptimizedBloomFilter.swift; sourceTree = "<group>"; };
 		D5C3D880FF8AE1673B20E1E3 /* BluetoothMeshService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BluetoothMeshService.swift; sourceTree = "<group>"; };
 		D69A18D27F9A565FD6041E12 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		E3BD91002E1B2DBB00049667 /* DualSigningProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DualSigningProtocol.swift; sourceTree = "<group>"; };
+		E3BD91012E1B2DBB00049667 /* NostrBridgeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NostrBridgeService.swift; sourceTree = "<group>"; };
+		E3BD91022E1B2DBB00049667 /* NostrMapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NostrMapping.swift; sourceTree = "<group>"; };
+		E3BD91102E1B5C9700049667 /* NostrSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NostrSettings.swift; sourceTree = "<group>"; };
+		E3BD91132E1BCC7B00049667 /* NostrCrypto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NostrCrypto.swift; sourceTree = "<group>"; };
+		E3BD91142E1BCC7B00049667 /* NostrProfileService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NostrProfileService.swift; sourceTree = "<group>"; };
+		E3BD911D2E1BCCA800049667 /* NostrIdentityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NostrIdentityView.swift; sourceTree = "<group>"; };
+		E3BD911E2E1BCCA800049667 /* NostrProfileMessageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NostrProfileMessageView.swift; sourceTree = "<group>"; };
+		E3BD911F2E1BCCA800049667 /* NostrSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NostrSettingsView.swift; sourceTree = "<group>"; };
+		E3BD91262E1BCCD800049667 /* NostrIdentityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NostrIdentityManager.swift; sourceTree = "<group>"; };
 		E6B8F7B7D55092C2540A7996 /* ChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewModel.swift; sourceTree = "<group>"; };
 		EA706D8E5097785414646A8E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		ED176FF3B274E35C2D827894 /* BatteryOptimizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryOptimizer.swift; sourceTree = "<group>"; };
@@ -111,6 +151,7 @@
 		2F82C5FC8433F4064F079D1F /* bitchat */ = {
 			isa = PBXGroup;
 			children = (
+				E3BD91032E1B2DBB00049667 /* Extensions */,
 				3A69677D382F1C3D5ED03F7D /* Assets.xcassets */,
 				EF625BB3AD919322C01A46B2 /* BitchatApp.swift */,
 				EA706D8E5097785414646A8E /* Info.plist */,
@@ -134,6 +175,9 @@
 		9A78348821A7D3374607D4E3 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				E3BD91022E1B2DBB00049667 /* NostrMapping.swift */,
+				E3BD91132E1BCC7B00049667 /* NostrCrypto.swift */,
+				E3BD91102E1B5C9700049667 /* NostrSettings.swift */,
 				ED176FF3B274E35C2D827894 /* BatteryOptimizer.swift */,
 				32F149C43D1915831B60FE09 /* CompressionUtil.swift */,
 				CB043CA5EEB9AC8B07D61E97 /* OptimizedBloomFilter.swift */,
@@ -155,6 +199,9 @@
 		A55126E93155456CAA8D6656 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				E3BD911D2E1BCCA800049667 /* NostrIdentityView.swift */,
+				E3BD911E2E1BCCA800049667 /* NostrProfileMessageView.swift */,
+				E3BD911F2E1BCCA800049667 /* NostrSettingsView.swift */,
 				763E0DBA9492A654FC0CDCB9 /* AppInfoView.swift */,
 				A08E03AA0C63E97C91749AEC /* ContentView.swift */,
 			);
@@ -166,6 +213,7 @@
 			children = (
 				A2136C3E22D02D4A8DBE7EAB /* BinaryProtocol.swift */,
 				229F17B68CFF7AB1BC91C847 /* BitchatProtocol.swift */,
+				E3BD91002E1B2DBB00049667 /* DualSigningProtocol.swift */,
 			);
 			path = Protocols;
 			sourceTree = "<group>";
@@ -186,6 +234,9 @@
 		D98A3186D7E4C72E35BDF7FE /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				E3BD91012E1B2DBB00049667 /* NostrBridgeService.swift */,
+				E3BD91142E1BCC7B00049667 /* NostrProfileService.swift */,
+				E3BD91262E1BCCD800049667 /* NostrIdentityManager.swift */,
 				D5C3D880FF8AE1673B20E1E3 /* BluetoothMeshService.swift */,
 				6DC1563390A15C042D059CF9 /* EncryptionService.swift */,
 				136696FC4436A02D98CE6A77 /* KeychainManager.swift */,
@@ -194,6 +245,13 @@
 				3448F84BF86A42A3CC4A9379 /* NotificationService.swift */,
 			);
 			path = Services;
+			sourceTree = "<group>";
+		};
+		E3BD91032E1B2DBB00049667 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Extensions;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -334,7 +392,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				AD11E46940D742AEAF547EB2 /* AppInfoView.swift in Sources */,
+				E3BD910D2E1B2DBB00049667 /* DualSigningProtocol.swift in Sources */,
+				E3BD910E2E1B2DBB00049667 /* NostrMapping.swift in Sources */,
+				E3BD910F2E1B2DBB00049667 /* NostrBridgeService.swift in Sources */,
 				C0A80BA73EC1A372B9338E3C /* BatteryOptimizer.swift in Sources */,
+				E3BD91112E1B5C9700049667 /* NostrSettings.swift in Sources */,
 				4B747085D07A1BCE0F5BA612 /* BinaryProtocol.swift in Sources */,
 				6E7761E21C99F28AE2F9BE5F /* BitchatApp.swift in Sources */,
 				923027D6F2F417AFA2488127 /* BitchatProtocol.swift in Sources */,
@@ -344,9 +406,15 @@
 				92D34E7A07C990C8A815B0CE /* ContentView.swift in Sources */,
 				739429DFDE5C5829CF70DA7D /* EncryptionService.swift in Sources */,
 				FB8819B4C84FAFEF5C36B216 /* KeychainManager.swift in Sources */,
+				E3BD91152E1BCC7B00049667 /* NostrProfileService.swift in Sources */,
+				E3BD91162E1BCC7B00049667 /* NostrCrypto.swift in Sources */,
 				4E778E5A414571ACAC2A0F01 /* MessageRetentionService.swift in Sources */,
 				C99763A4761567F587D21688 /* MessageRetryService.swift in Sources */,
 				749D8CF8A362B6CD0786782D /* NotificationService.swift in Sources */,
+				E3BD91272E1BCCD800049667 /* NostrIdentityManager.swift in Sources */,
+				E3BD91202E1BCCA800049667 /* NostrSettingsView.swift in Sources */,
+				E3BD91212E1BCCA800049667 /* NostrProfileMessageView.swift in Sources */,
+				E3BD91222E1BCCA800049667 /* NostrIdentityView.swift in Sources */,
 				0245710AEAA58AD0A1425234 /* OptimizedBloomFilter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -356,7 +424,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				ABAF130D88561F4A646F0430 /* AppInfoView.swift in Sources */,
+				E3BD91072E1B2DBB00049667 /* DualSigningProtocol.swift in Sources */,
+				E3BD91082E1B2DBB00049667 /* NostrMapping.swift in Sources */,
+				E3BD91092E1B2DBB00049667 /* NostrBridgeService.swift in Sources */,
 				5D95F2BFBE257A1225998389 /* BatteryOptimizer.swift in Sources */,
+				E3BD91122E1B5C9700049667 /* NostrSettings.swift in Sources */,
 				F455F011B3B648ADA233F998 /* BinaryProtocol.swift in Sources */,
 				10E68BB889356219189E38EC /* BitchatApp.swift in Sources */,
 				6DE056E1EE9850E9FBF50157 /* BitchatProtocol.swift in Sources */,
@@ -366,9 +438,15 @@
 				1D9674FA5F998503831DC281 /* ContentView.swift in Sources */,
 				DDA1DFAB1FF7AADE52DC0F53 /* EncryptionService.swift in Sources */,
 				8F737CE0435792CC2AD65FCB /* KeychainManager.swift in Sources */,
+				E3BD911B2E1BCC7B00049667 /* NostrProfileService.swift in Sources */,
+				E3BD911C2E1BCC7B00049667 /* NostrCrypto.swift in Sources */,
 				4274B6016F755946FBF2513E /* MessageRetentionService.swift in Sources */,
 				CEAE115C9C3EB3C4ED82F128 /* MessageRetryService.swift in Sources */,
 				61C81ED5F679D5E973EE0C07 /* NotificationService.swift in Sources */,
+				E3BD91282E1BCCD800049667 /* NostrIdentityManager.swift in Sources */,
+				E3BD91232E1BCCA800049667 /* NostrSettingsView.swift in Sources */,
+				E3BD91242E1BCCA800049667 /* NostrProfileMessageView.swift in Sources */,
+				E3BD91252E1BCCA800049667 /* NostrIdentityView.swift in Sources */,
 				1F48A8CEEE9399D1EBD08F0C /* OptimizedBloomFilter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -382,6 +460,11 @@
 				C91FDE97070433E6CFE95C55 /* BloomFilterTests.swift in Sources */,
 				ADC66F95FBD513B10411ADB3 /* MessagePaddingTests.swift in Sources */,
 				F4A689F5F34125AE1BFD5599 /* PasswordProtectedRoomTests.swift in Sources */,
+				E3BD910A2E1B2DBB00049667 /* DualSigningProtocol.swift in Sources */,
+				E3BD910B2E1B2DBB00049667 /* NostrMapping.swift in Sources */,
+				E3BD91172E1BCC7B00049667 /* NostrProfileService.swift in Sources */,
+				E3BD91182E1BCC7B00049667 /* NostrCrypto.swift in Sources */,
+				E3BD910C2E1B2DBB00049667 /* NostrBridgeService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -394,6 +477,11 @@
 				846E2B446E36639159704730 /* BloomFilterTests.swift in Sources */,
 				F00B713D5053617FB5F3F1BE /* MessagePaddingTests.swift in Sources */,
 				230B11C5BF035D35638B21C8 /* PasswordProtectedRoomTests.swift in Sources */,
+				E3BD91042E1B2DBB00049667 /* DualSigningProtocol.swift in Sources */,
+				E3BD91052E1B2DBB00049667 /* NostrMapping.swift in Sources */,
+				E3BD91192E1BCC7B00049667 /* NostrProfileService.swift in Sources */,
+				E3BD911A2E1BCC7B00049667 /* NostrCrypto.swift in Sources */,
+				E3BD91062E1B2DBB00049667 /* NostrBridgeService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -417,6 +505,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				DEVELOPMENT_TEAM = XKQH9TE989;
 				INFOPLIST_FILE = bitchatTests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -424,7 +514,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = chat.bitchat.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.touchoflogic.chat.bitchat.tests;
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -436,6 +526,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				DEVELOPMENT_TEAM = XKQH9TE989;
 				INFOPLIST_FILE = bitchatTests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -443,7 +535,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = chat.bitchat.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.touchoflogic.chat.bitchat.tests;
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -479,7 +571,7 @@
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = L3N5LHJD5Y;
+				DEVELOPMENT_TEAM = XKQH9TE989;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = bitchat/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
@@ -489,7 +581,7 @@
 					"@executable_path/Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				PRODUCT_BUNDLE_IDENTIFIER = chat.bitchat;
+				PRODUCT_BUNDLE_IDENTIFIER = com.touchoflogic.chat.bitchat;
 				PRODUCT_NAME = bitchat;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -529,7 +621,7 @@
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = L3N5LHJD5Y;
+				DEVELOPMENT_TEAM = XKQH9TE989;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = bitchat/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
@@ -539,7 +631,7 @@
 					"@executable_path/Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				PRODUCT_BUNDLE_IDENTIFIER = chat.bitchat;
+				PRODUCT_BUNDLE_IDENTIFIER = com.touchoflogic.chat.bitchat;
 				PRODUCT_NAME = bitchat;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

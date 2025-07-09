@@ -87,8 +87,8 @@ struct BitchatPacket: Codable {
     let senderID: Data
     let recipientID: Data?
     let timestamp: UInt64
-    let payload: Data
-    let signature: Data?
+    var payload: Data
+    var signature: Data?
     var ttl: UInt8
     
     init(type: UInt8, senderID: Data, recipientID: Data?, timestamp: UInt64, payload: Data, signature: Data?, ttl: UInt8) {
@@ -141,8 +141,9 @@ struct BitchatMessage: Codable, Equatable {
     let room: String?  // Room hashtag (e.g., "#general")
     let encryptedContent: Data?  // For password-protected rooms
     let isEncrypted: Bool  // Flag to indicate if content is encrypted
+    let dualSignature: DualSignatureInfo?  // Nostr dual signature information
     
-    init(sender: String, content: String, timestamp: Date, isRelay: Bool, originalSender: String? = nil, isPrivate: Bool = false, recipientNickname: String? = nil, senderPeerID: String? = nil, mentions: [String]? = nil, room: String? = nil, encryptedContent: Data? = nil, isEncrypted: Bool = false) {
+    init(sender: String, content: String, timestamp: Date, isRelay: Bool, originalSender: String? = nil, isPrivate: Bool = false, recipientNickname: String? = nil, senderPeerID: String? = nil, mentions: [String]? = nil, room: String? = nil, encryptedContent: Data? = nil, isEncrypted: Bool = false, dualSignature: DualSignatureInfo? = nil) {
         self.id = UUID().uuidString
         self.sender = sender
         self.content = content
@@ -156,7 +157,58 @@ struct BitchatMessage: Codable, Equatable {
         self.room = room
         self.encryptedContent = encryptedContent
         self.isEncrypted = isEncrypted
+        self.dualSignature = dualSignature
     }
+}
+
+// Dual signature information for BitchatMessage
+struct DualSignatureInfo: Codable, Equatable {
+    let nostrPubkey: String          // Hex representation
+    let nostrSignature: Data         // Signature bytes
+    let bridgeOptions: BridgeOptions // Bridge configuration
+    
+    /// Whether this message was signed for publishing to relays
+    var isPublishable: Bool {
+        return bridgeOptions.isPublishable
+    }
+}
+
+// Bridge configuration options
+struct BridgeOptions: Codable, Equatable {
+    private let rawValue: UInt8
+    
+    init(version: UInt8 = 0, publishable: Bool = false) {
+        var value: UInt8 = version & 0x01  // Version in bit 0
+        if publishable {
+            value |= 0x80  // Publishable flag in bit 7
+        }
+        self.rawValue = value
+    }
+    
+    init(rawValue: UInt8) {
+        self.rawValue = rawValue
+    }
+    
+    var version: UInt8 {
+        return rawValue & 0x01
+    }
+    
+    var isPublishable: Bool {
+        return (rawValue & 0x80) != 0
+    }
+    
+    var reserved: UInt8 {
+        return (rawValue & 0x7E) >> 1
+    }
+    
+    /// Access the raw byte value for binary encoding
+    var binaryValue: UInt8 {
+        return rawValue
+    }
+    
+    // Convenience constructors
+    static let identityOnly = BridgeOptions(version: 0, publishable: false)
+    static let publishable = BridgeOptions(version: 0, publishable: true)
 }
 
 protocol BitchatDelegate: AnyObject {

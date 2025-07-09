@@ -15,6 +15,10 @@ import CommonCrypto
 import UIKit
 #endif
 
+// MARK: - Type aliases for Nostr integration
+// Note: NostrProfile is defined in NostrProfileService.swift
+// If build errors occur, ensure NostrProfileService.swift is added to the Xcode project target
+
 class ChatViewModel: ObservableObject {
     @Published var messages: [BitchatMessage] = []
     @Published var connectedPeers: [String] = []
@@ -87,6 +91,28 @@ class ChatViewModel: ObservableObject {
         
         // Request notification permission
         NotificationService.shared.requestAuthorization()
+        
+        // Set up Nostr identity monitoring
+        setupNostrIdentityMonitoring()
+        
+        // Check for Nostr profile on startup (ContentView handles force refresh)
+        Task {
+            await NostrIdentityManager.shared.checkAndUpdateProfile()
+        }
+    }
+    
+    /// Set up monitoring for Nostr profile updates
+    private func setupNostrIdentityMonitoring() {
+        // Listen for Nostr profile updates
+        NotificationCenter.default.addObserver(
+            forName: .nostrProfileUpdated,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            if let displayName = notification.userInfo?["displayName"] as? String {
+                self?.updateNicknameFromNostrProfile(displayName)
+            }
+        }
     }
     
     private func loadNickname() {
@@ -104,6 +130,46 @@ class ChatViewModel: ObservableObject {
         
         // Send announce with new nickname to all peers
         meshService.sendBroadcastAnnounce()
+    }
+    
+    /// Update nickname from Nostr profile display name
+    private func updateNicknameFromNostrProfile(_ displayName: String) {
+        // Only update if the new display name is different
+        guard displayName != nickname else { return }
+        
+        // Update the nickname (this will trigger the saveNickname through didSet)
+        nickname = displayName
+        
+        // Add a system message to inform about the update
+        let systemMessage = BitchatMessage(
+            sender: "system",
+            content: "Nickname updated from Nostr profile: \(displayName)",
+            timestamp: Date(),
+            isRelay: false
+        )
+        messages.append(systemMessage)
+    }
+    
+    /// Manually trigger Nostr profile refresh
+    func refreshNostrProfile() {
+        // TODO: Re-enable when Nostr files are added to Xcode project target
+        /*
+        Task {
+            await NostrIdentityManager.shared.forceRefreshProfile()
+        }
+        */
+    }
+    
+    /// Check if user has a Nostr identity configured
+    var hasNostrIdentity: Bool {
+        // TODO: Re-enable when Nostr files are added to Xcode project target
+        return false // NostrIdentityManager.shared.hasNostrIdentity
+    }
+    
+    /// Get the user's Nostr profile
+    var nostrProfile: Any? { // NostrProfileService.NostrProfile? {
+        // TODO: Re-enable when NostrProfileService.swift is added to Xcode project target
+        return nil // NostrIdentityManager.shared.currentProfile
     }
     
     private func loadFavorites() {
